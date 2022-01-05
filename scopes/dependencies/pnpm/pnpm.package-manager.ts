@@ -116,6 +116,7 @@ export class PnpmPackageManager implements PackageManager {
       {
         nodeLinker: installOptions.nodeLinker,
         overrides: installOptions.overrides,
+        rootComponents: installOptions.rootComponents,
       },
       this.logger
     );

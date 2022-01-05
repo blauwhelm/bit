@@ -27,7 +27,7 @@ export class State {
      * dependency graph of the component current. ideally package dependencies would be also placed here.
      */
     // readonly dependencies: Dependencies
-    readonly dependencies,
+    readonly dependencies: any,
 
     /**
      * instance of legacy consumer component.

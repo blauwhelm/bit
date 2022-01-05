@@ -9,7 +9,7 @@ import {
   PEER_DEP_LIFECYCLE_TYPE,
   RUNTIME_DEP_LIFECYCLE_TYPE,
 } from '../../dependencies/constants';
-import { ManifestDependenciesObject } from '../manifest';
+import { ManifestDependenciesObject, ManifestDependenciesMetaObject } from '../manifest';
 import { DependencyLifecycleType, SemverVersion, PackageName } from '../../dependencies';
 import { DedupedDependencies, DedupedDependenciesPeerConflicts } from './dedupe-dependencies';
 import { PackageNameIndex, PackageNameIndexItem, PackageNameIndexComponentItem } from './index-by-dep-id';
@@ -403,12 +403,18 @@ function addToComponentDependenciesMapInDeduped(
     const depKeyName = KEY_NAME_BY_LIFECYCLE_TYPE[indexItem.lifecycleType];
     if (!compEntry) {
       compEntry = {
-        dependencies: {},
-        devDependencies: {},
-        peerDependencies: {},
+        dependencies: {
+          dependencies: {},
+          devDependencies: {},
+          peerDependencies: {},
+        },
+        dependenciesMeta: {},
       };
     }
-    compEntry[depKeyName] = Object.assign({}, compEntry[depKeyName], { [packageName]: indexItem.range });
+    compEntry.dependencies[depKeyName] = {
+      ...compEntry.dependencies[depKeyName],
+      [packageName]: indexItem.range,
+    };
     dedupedDependencies.componentDependenciesMap.set(indexItem.origin, compEntry);
   };
 }
@@ -472,7 +478,10 @@ export function getEmptyDedupedDependencies(): DedupedDependencies {
       devDependencies: {},
       peerDependencies: {},
     },
-    componentDependenciesMap: new Map<PackageName, ManifestDependenciesObject>(),
+    componentDependenciesMap: new Map<
+      PackageName,
+      { dependencies: ManifestDependenciesObject; dependenciesMeta: ManifestDependenciesMetaObject }
+    >(),
     issus: {
       peerConflicts: [],
     },

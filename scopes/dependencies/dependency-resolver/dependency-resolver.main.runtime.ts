@@ -202,6 +202,8 @@ export interface DependencyResolverWorkspaceConfig {
    * Supported values are hoisted and isolated.
    */
   nodeLinker?: 'hoisted' | 'isolated';
+
+  rootComponents?: string[];
 }
 
 export interface DependencyResolverVariantConfig {

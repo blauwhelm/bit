@@ -7,14 +7,20 @@ import { VariantPolicy, WorkspacePolicy } from '../policy';
 import { DependencyResolverMain } from '../dependency-resolver.main.runtime';
 import { ComponentsManifestsMap } from '../types';
 import { ComponentManifest } from './component-manifest';
-import { DedupedDependencies, dedupeDependencies, getEmptyDedupedDependencies } from './deduping';
-import { ManifestToJsonOptions, ManifestDependenciesObject } from './manifest';
+import { DedupedDependencies, getEmptyDedupedDependencies } from './deduping';
+import { ManifestToJsonOptions, ManifestDependenciesObject, ManifestDependenciesMetaObject } from './manifest';
 import { updateDependencyVersion } from './update-dependency-version';
 import { WorkspaceManifest } from './workspace-manifest';
 
 export type DepsFilterFn = (dependencies: DependencyList) => DependencyList;
 
-export type ComponentDependenciesMap = Map<PackageName, ManifestDependenciesObject>;
+export type ComponentDependenciesMap = Map<
+  PackageName,
+  {
+    dependencies: ManifestDependenciesObject;
+    dependenciesMeta: ManifestDependenciesMetaObject;
+  }
+>;
 export interface WorkspaceManifestToJsonOptions extends ManifestToJsonOptions {
   includeDir?: boolean;
 }
@@ -50,13 +56,13 @@ export class WorkspaceManifestFactory {
       rootPolicy,
       optsWithDefaults.dependencyFilterFn
     );
-    let dedupedDependencies = getEmptyDedupedDependencies();
-    if (options.dedupe) {
-      dedupedDependencies = dedupeDependencies(rootPolicy, componentDependenciesMap);
-    } else {
-      dedupedDependencies.rootDependencies = rootPolicy.toManifest();
-      dedupedDependencies.componentDependenciesMap = componentDependenciesMap;
-    }
+    const dedupedDependencies = getEmptyDedupedDependencies();
+    // if (options.dedupe) {
+    // dedupedDependencies = dedupeDependencies(rootPolicy, componentDependenciesMap);
+    // } else {
+    dedupedDependencies.rootDependencies = rootPolicy.toManifest();
+    dedupedDependencies.componentDependenciesMap = componentDependenciesMap;
+    // }
     const componentsManifestsMap = getComponentsManifests(
       dedupedDependencies,
       components,
@@ -99,16 +105,30 @@ export class WorkspaceManifestFactory {
         depList = dependencyFilterFn(depList);
       }
       await this.updateDependenciesVersions(component, rootPolicy, depList);
-      const depManifest = await depList.toDependenciesManifest();
+      const depManifest = depList.toDependenciesManifest();
+      const dependenciesMeta = {};
+      for (const compDep of Array.from(component.state.dependencies.dependencies) as any) {
+        depManifest.dependencies![compDep.packageName] = `workspace:*`; // eslint-disable-line
+        dependenciesMeta[compDep.packageName] = { injected: true };
+      }
 
-      return { packageName, depManifest };
+      return { packageName, depManifest, dependenciesMeta };
     });
-    const result = new Map<PackageName, ManifestDependenciesObject>();
+    const result = new Map<
+      PackageName,
+      {
+        dependencies: ManifestDependenciesObject;
+        dependenciesMeta: ManifestDependenciesMetaObject;
+      }
+    >();
 
     if (buildResultsP.length) {
       const results = await Promise.all(buildResultsP);
       results.forEach((currResult) => {
-        result.set(currResult.packageName, currResult.depManifest);
+        result.set(currResult.packageName, {
+          dependencies: currResult.depManifest,
+          dependenciesMeta: currResult.dependenciesMeta,
+        });
       });
     }
 
@@ -199,8 +219,11 @@ function getComponentsManifests(
         peerDependencies: {},
       };
       let dependencies = blankDependencies;
+      let dependenciesMeta = {};
       if (dedupedDependencies.componentDependenciesMap.has(packageName)) {
-        dependencies = dedupedDependencies.componentDependenciesMap.get(packageName) as ManifestDependenciesObject;
+        const depsResult = dedupedDependencies.componentDependenciesMap.get(packageName)!; // eslint-disable-line
+        dependencies = depsResult.dependencies;
+        dependenciesMeta = depsResult.dependenciesMeta;
       }
 
       const getVersion = (): string => {
@@ -210,7 +233,13 @@ function getComponentsManifests(
       };
 
       const version = getVersion();
-      const manifest = new ComponentManifest(packageName, new SemVer(version), dependencies, component);
+      const manifest = new ComponentManifest(
+        packageName,
+        new SemVer(version),
+        dependencies,
+        component,
+        dependenciesMeta
+      );
       componentsManifests.set(packageName, manifest);
     }
   });

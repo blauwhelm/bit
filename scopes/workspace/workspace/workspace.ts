@@ -1568,6 +1568,16 @@ export class Workspace implements ComponentFactory {
       `installing dependencies in workspace using ${chalk.cyan(this.dependencyResolver.getPackageManagerName())}`
     );
     this.logger.debug(`installing dependencies in workspace with options`, options);
+    // TODO: this make duplicate
+    // this.logger.consoleSuccess();
+    // TODO: add the links results to the output
+    await this.link({
+      linkTeambitBit: true,
+      legacyLink: true,
+      linkCoreAspects: true,
+      linkNestedDepsInNM: !this.isLegacy,
+    });
+    this.consumer.componentLoader.clearComponentsCache();
     this.clearCache();
     // TODO: pass get install options
     const installer = this.dependencyResolver.getInstaller({});
@@ -1582,17 +1592,9 @@ export class Workspace implements ComponentFactory {
       copyPeerToRuntimeOnComponents: options?.copyPeerToRuntimeOnComponents ?? false,
       dependencyFilterFn: depsFilterFn,
       overrides: this.dependencyResolver.config.overrides,
+      rootComponents: this.dependencyResolver.config.rootComponents,
     };
     await installer.install(this.path, mergedRootPolicy, compDirMap, { installTeambitBit: false }, pmInstallOptions);
-    // TODO: this make duplicate
-    // this.logger.consoleSuccess();
-    // TODO: add the links results to the output
-    await this.link({
-      linkTeambitBit: true,
-      legacyLink: true,
-      linkCoreAspects: true,
-      linkNestedDepsInNM: !this.isLegacy,
-    });
     await this.consumer.componentFsCache.deleteAllDependenciesDataCache();
     return compDirMap;
   }

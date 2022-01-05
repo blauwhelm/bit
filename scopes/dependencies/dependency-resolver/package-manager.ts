@@ -23,6 +23,8 @@ export type PackageManagerInstallOptions = {
   overrides?: Record<string, string>;
 
   nodeLinker?: 'hoisted' | 'isolated';
+
+  rootComponents?: string[];
 };
 
 export type PackageManagerGetPeerDependencyIssuesOptions = PackageManagerInstallOptions;

@@ -13,6 +13,8 @@ export type ManifestDependenciesKeysNames = keyof ManifestDependenciesKeys;
 
 export type ManifestDependenciesObject = Partial<Record<ManifestDependenciesKeysNames, DepObjectValue>>;
 
+export type ManifestDependenciesMetaObject = Record<string, { injected?: boolean }>;
+
 export type DepObjectValue = Record<PackageName, SemverVersion>;
 
 export interface ManifestToJsonOptions {
@@ -20,7 +22,12 @@ export interface ManifestToJsonOptions {
 }
 
 export class Manifest {
-  constructor(public name: string, public version: SemVer, public dependencies: ManifestDependenciesObject) {}
+  constructor(
+    public name: string,
+    public version: SemVer,
+    public dependencies: ManifestDependenciesObject,
+    public dependenciesMeta?: ManifestDependenciesMetaObject
+  ) {}
 
   // Should be implemented on sub classes
   // get dir(): string {
@@ -31,6 +38,7 @@ export class Manifest {
     let dependencies = this.dependencies.dependencies || {};
     const devDependencies = this.dependencies.devDependencies || {};
     const peerDependencies = this.dependencies.peerDependencies || {};
+    const dependenciesMeta = this.dependenciesMeta ?? {};
     if (options.copyPeerToRuntime) {
       dependencies = { ...peerDependencies, ...dependencies };
     }
@@ -39,6 +47,7 @@ export class Manifest {
       version: this.version.version,
       dependencies,
       devDependencies,
+      dependenciesMeta,
       peerDependencies,
     };
     // if (options.includeDir) {
