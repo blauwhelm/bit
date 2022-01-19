@@ -1185,6 +1185,15 @@ export class DependencyResolverMain {
       peerDependencies: {},
     };
   }
+
+  async getDistDirs(rootDir: string, compDir: string): Promise<string[]> {
+    const packageManager = this.packageManagerSlot.get(this.config.packageManager);
+    const defaultDistDir = `node_modules/${compDir}`;
+    if (packageManager?.getDistDirs && typeof packageManager?.getDistDirs === 'function') {
+      return [defaultDistDir, ...(await packageManager?.getDistDirs(rootDir, compDir))];
+    }
+    return [defaultDistDir];
+  }
 }
 
 DependencyResolverAspect.addRuntime(DependencyResolverMain);

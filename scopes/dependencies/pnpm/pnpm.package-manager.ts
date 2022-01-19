@@ -1,3 +1,4 @@
+import path from 'path';
 import { ComponentMap } from '@teambit/component';
 import {
   ComponentsManifestsMap,
@@ -18,6 +19,7 @@ import { Logger } from '@teambit/logger';
 import { memoize, omit } from 'lodash';
 import { PkgMain } from '@teambit/pkg';
 import { PeerDependencyIssuesByProjects } from '@pnpm/core';
+import { read as readModulesState } from '@pnpm/modules-yaml';
 import { ProjectManifest } from '@pnpm/types';
 import { join } from 'path';
 import userHome from 'user-home';
@@ -235,5 +237,10 @@ export class PnpmPackageManager implements PackageManager {
     }
 
     return new Registries(defaultRegistry, scopesRegistries);
+  }
+
+  async getDistDirs(rootDir: string, compDir: string): Promise<string[]> {
+    const modulesState = await readModulesState(path.join(rootDir, 'node_modules'));
+    return modulesState?.injectedDeps?.[compDir] ?? [];
   }
 }

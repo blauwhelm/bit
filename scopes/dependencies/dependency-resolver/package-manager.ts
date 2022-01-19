@@ -67,6 +67,8 @@ export interface PackageManager {
     options: PackageManagerGetPeerDependencyIssuesOptions
   ): Promise<PeerDependencyIssuesByProjects>;
 
+  getDistDirs?(rootDir: string, workspaceProjectPath: string): Promise<string[]>;
+
   getRegistries?(): Promise<Registries>;
 
   getProxyConfig?(): Promise<ProxyConfig>;
