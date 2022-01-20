@@ -1595,7 +1595,6 @@ export class Workspace implements ComponentFactory {
       rootComponents: this.dependencyResolver.config.rootComponents,
     };
     await installer.install(this.path, mergedRootPolicy, compDirMap, { installTeambitBit: false }, pmInstallOptions);
-    // TODO: copy the package.json files that were created by link() to any injected dependencies
     await this.consumer.componentFsCache.deleteAllDependenciesDataCache();
     return compDirMap;
   }

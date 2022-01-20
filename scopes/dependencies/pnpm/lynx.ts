@@ -1,7 +1,10 @@
+import fs from 'graceful-fs';
+import path from 'path';
 import semver from 'semver';
 import parsePackageName from 'parse-package-name';
 import defaultReporter from '@pnpm/default-reporter';
 import { streamParser } from '@pnpm/logger';
+import { read as readModulesState } from '@pnpm/modules-yaml';
 import { StoreController, WantedDependency } from '@pnpm/package-store';
 import { createOrConnectStoreController, CreateStoreControllerOptions } from '@pnpm/store-connection-manager';
 import {
@@ -24,7 +27,10 @@ import createResolverAndFetcher, { ClientOptions } from '@pnpm/client';
 import pickRegistryForPackage from '@pnpm/pick-registry-for-package';
 import { Logger } from '@teambit/logger';
 import toNerfDart from 'nerf-dart';
+import { promisify } from 'util';
 import { readConfig } from './read-config';
+
+const link = promisify(fs.link);
 
 type RegistriesMap = {
   default: string;
@@ -269,6 +275,23 @@ export async function install(
     await mutateModules(packagesToBuild, opts);
   } finally {
     stopReporting();
+  }
+  const modulesState = await readModulesState(path.join(rootManifest.rootDir, 'node_modules'));
+  if (modulesState?.injectedDeps) {
+    await linkManifestsToInjectedDeps(rootManifest.rootDir, manifestsByPaths, modulesState.injectedDeps);
+  }
+}
+
+async function linkManifestsToInjectedDeps(rootDir: string, manifestsByPaths, injectedDeps: Record<string, string[]>) {
+  for (const [compDir, targetDirs] of Object.entries(injectedDeps)) {
+    const pkgName = manifestsByPaths[path.join(rootDir, compDir)]?.name;
+    if (pkgName) {
+      await Promise.all(
+        targetDirs.map((targetDir) =>
+          link(path.join(rootDir, 'node_modules', pkgName, 'package.json'), path.join(targetDir, 'package.json'))
+        )
+      );
+    }
   }
 }
 
