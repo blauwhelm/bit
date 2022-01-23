@@ -295,6 +295,11 @@ export default class DependencyResolver {
       }
       if (packages[depField] && !R.isEmpty(packages[depField])) {
         Object.assign(this.allPackagesDependencies[this._pkgFieldMapping(depField)], packages[depField]);
+        if (depField === 'peerDependencies' && this.allPackagesDependencies?.packageDependencies) {
+          for (const peerName of Object.keys(packages[depField])){
+            delete this.allPackagesDependencies.packageDependencies[peerName]
+          }
+        }
       }
     });
   }
