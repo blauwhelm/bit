@@ -1,4 +1,3 @@
-import path from 'path';
 import { ComponentMap } from '@teambit/component';
 import {
   ComponentsManifestsMap,
@@ -240,7 +239,7 @@ export class PnpmPackageManager implements PackageManager {
   }
 
   async getDistDirs(rootDir: string, compDir: string): Promise<string[]> {
-    const modulesState = await readModulesState(path.join(rootDir, 'node_modules'));
+    const modulesState = await readModulesState(join(rootDir, 'node_modules'));
     return modulesState?.injectedDeps?.[compDir] ?? [];
   }
 }

@@ -79,7 +79,18 @@ export class CompilerMain {
     DependencyResolverAspect,
   ];
 
-  static async provider([cli, workspace, envs, loggerMain, pubsub, aspectLoader, builder, ui, generator, dependencyResolver]: [
+  static async provider([
+    cli,
+    workspace,
+    envs,
+    loggerMain,
+    pubsub,
+    aspectLoader,
+    builder,
+    ui,
+    generator,
+    dependencyResolver,
+  ]: [
     CLIMain,
     Workspace,
     EnvsMain,
@@ -92,7 +103,15 @@ export class CompilerMain {
     DependencyResolverMain,
   ]) {
     const logger = loggerMain.createLogger(CompilerAspect.id);
-    const workspaceCompiler = new WorkspaceCompiler(workspace, envs, pubsub, aspectLoader, ui, logger, dependencyResolver);
+    const workspaceCompiler = new WorkspaceCompiler(
+      workspace,
+      envs,
+      pubsub,
+      aspectLoader,
+      ui,
+      logger,
+      dependencyResolver
+    );
     envs.registerService(new CompilerService());
     const compilerMain = new CompilerMain(pubsub, workspaceCompiler, envs, builder);
     cli.register(new CompileCmd(workspaceCompiler, logger, pubsub));

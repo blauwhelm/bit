@@ -283,16 +283,20 @@ export async function install(
 }
 
 async function linkManifestsToInjectedDeps(rootDir: string, manifestsByPaths, injectedDeps: Record<string, string[]>) {
-  for (const [compDir, targetDirs] of Object.entries(injectedDeps)) {
-    const pkgName = manifestsByPaths[path.join(rootDir, compDir)]?.name;
-    if (pkgName) {
-      await Promise.all(
-        targetDirs.map((targetDir) =>
-          link(path.join(rootDir, 'node_modules', pkgName, 'package.json'), path.join(targetDir, 'package.json'))
-        )
-      );
-    }
-  }
+  await Promise.all(
+    Object.entries(injectedDeps)
+      .map(async ([compDir, targetDirs]) => {
+        const pkgName = manifestsByPaths[path.join(rootDir, compDir)]?.name;
+        if (pkgName) {
+          const pkgJsonPath = path.join(rootDir, 'node_modules', pkgName, 'package.json');
+          await Promise.all(
+            targetDirs.map((targetDir) =>
+              link(pkgJsonPath, path.join(targetDir, 'package.json'))
+            )
+          );
+        }
+      })
+  );
 }
 
 export async function resolveRemoteVersion(
