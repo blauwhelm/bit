@@ -37,7 +37,7 @@ export function indexByDepId(
 ): PackageNameIndex {
   const result: PackageNameIndex = new Map();
   componentDependenciesMap.forEach((depsObject, compPackageName) => {
-    forEachObjIndexed(addSpecificLifeCycleDepsToIndex(result, compPackageName), depsObject);
+    forEachObjIndexed(addSpecificLifeCycleDepsToIndex(result, compPackageName), depsObject.dependencies);
   });
   addPreservedFromRoot(result, rootPolicy);
   return result;

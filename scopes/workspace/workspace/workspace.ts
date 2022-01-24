@@ -1573,8 +1573,8 @@ export class Workspace implements ComponentFactory {
     // TODO: add the links results to the output
     await this.link({
       linkTeambitBit: true,
-      legacyLink: true,
-      linkCoreAspects: true,
+      legacyLink: false,
+      linkCoreAspects: false,
       linkNestedDepsInNM: false,
     });
     this.consumer.componentLoader.clearComponentsCache();
@@ -1597,8 +1597,8 @@ export class Workspace implements ComponentFactory {
     await installer.install(this.path, mergedRootPolicy, compDirMap, { installTeambitBit: false }, pmInstallOptions);
     await this.link({
       linkTeambitBit: false,
-      legacyLink: false,
-      linkCoreAspects: false,
+      legacyLink: true,
+      linkCoreAspects: true,
       linkNestedDepsInNM: !this.isLegacy,
     });
     await this.consumer.componentFsCache.deleteAllDependenciesDataCache();
