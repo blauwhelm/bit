@@ -444,7 +444,11 @@ export class DependencyResolverMain {
     options: CreateFromComponentsOptions = defaultCreateFromComponentsOptions
   ): Promise<WorkspaceManifest> {
     this.logger.setStatusLine('deduping dependencies for installation');
-    const concreteOpts = { ...defaultCreateFromComponentsOptions, ...options };
+    const concreteOpts = {
+      ...defaultCreateFromComponentsOptions,
+      ...options,
+      hasRootComponents: Boolean(this.config.rootComponents?.length),
+    };
     const workspaceManifestFactory = new WorkspaceManifestFactory(this);
     const res = await workspaceManifestFactory.createFromComponents(
       name,

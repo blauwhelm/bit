@@ -7,7 +7,7 @@ import { VariantPolicy, WorkspacePolicy } from '../policy';
 import { DependencyResolverMain } from '../dependency-resolver.main.runtime';
 import { ComponentsManifestsMap } from '../types';
 import { ComponentManifest } from './component-manifest';
-import { DedupedDependencies, getEmptyDedupedDependencies } from './deduping';
+import { dedupeDependencies, DedupedDependencies, getEmptyDedupedDependencies } from './deduping';
 import { ManifestToJsonOptions, ManifestDependenciesObject, ManifestDependenciesMetaObject } from './manifest';
 import { updateDependencyVersion } from './update-dependency-version';
 import { WorkspaceManifest } from './workspace-manifest';
@@ -30,6 +30,7 @@ export type CreateFromComponentsOptions = {
   createManifestForComponentsWithoutDependencies: boolean;
   dedupe?: boolean;
   dependencyFilterFn?: DepsFilterFn;
+  hasRootComponents?: boolean;
 };
 
 const DEFAULT_CREATE_OPTIONS: CreateFromComponentsOptions = {
@@ -54,15 +55,16 @@ export class WorkspaceManifestFactory {
       components,
       optsWithDefaults.filterComponentsFromManifests,
       rootPolicy,
-      optsWithDefaults.dependencyFilterFn
+      optsWithDefaults.dependencyFilterFn,
+      optsWithDefaults.hasRootComponents
     );
-    const dedupedDependencies = getEmptyDedupedDependencies();
-    // if (options.dedupe) {
-    // dedupedDependencies = dedupeDependencies(rootPolicy, componentDependenciesMap);
-    // } else {
-    dedupedDependencies.rootDependencies = rootPolicy.toManifest();
-    dedupedDependencies.componentDependenciesMap = componentDependenciesMap;
-    // }
+    let dedupedDependencies = getEmptyDedupedDependencies();
+    if (options.dedupe) {
+      dedupedDependencies = dedupeDependencies(rootPolicy, componentDependenciesMap);
+    } else {
+      dedupedDependencies.rootDependencies = rootPolicy.toManifest();
+      dedupedDependencies.componentDependenciesMap = componentDependenciesMap;
+    }
     const componentsManifestsMap = getComponentsManifests(
       dedupedDependencies,
       components,
@@ -89,7 +91,8 @@ export class WorkspaceManifestFactory {
     components: Component[],
     filterComponentsFromManifests = true,
     rootPolicy: WorkspacePolicy,
-    dependencyFilterFn?: DepsFilterFn
+    dependencyFilterFn: DepsFilterFn | undefined,
+    hasRootComponents?: boolean
   ): Promise<ComponentDependenciesMap> {
     const buildResultsP = components.map(async (component) => {
       const packageName = componentIdToPackageName(component.state._consumer);
@@ -107,9 +110,11 @@ export class WorkspaceManifestFactory {
       await this.updateDependenciesVersions(component, rootPolicy, depList);
       const depManifest = depList.toDependenciesManifest();
       const dependenciesMeta = {};
-      for (const compDep of Array.from(component.state.dependencies.dependencies) as any) {
-        depManifest.dependencies![compDep.packageName] = `workspace:*`; // eslint-disable-line
-        dependenciesMeta[compDep.packageName] = { injected: true };
+      if (hasRootComponents) {
+        for (const compDep of Array.from(component.state.dependencies.dependencies) as any) {
+          depManifest.dependencies![compDep.packageName] = `workspace:*`; // eslint-disable-line
+          dependenciesMeta[compDep.packageName] = { injected: true };
+        }
       }
 
       return { packageName, depManifest, dependenciesMeta };

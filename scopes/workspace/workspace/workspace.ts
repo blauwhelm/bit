@@ -1586,13 +1586,18 @@ export class Workspace implements ComponentFactory {
 
     const depsFilterFn = await this.generateFilterFnForDepsFromLocalRemote();
 
+    const rootComponents = this.dependencyResolver.config.rootComponents;
+    const hasRootComponents = Boolean(rootComponents?.length);
+    if (hasRootComponents && this.dependencyResolver.config.packageManager !== 'teambit.dependencies/pnpm') {
+      throw new BitError('rootComponents are only supported by the pnpm package manager');
+    }
     const pmInstallOptions: PackageManagerInstallOptions = {
-      dedupe: options?.dedupe,
+      dedupe: !hasRootComponents && options?.dedupe,
       copyPeerToRuntimeOnRoot: options?.copyPeerToRuntimeOnRoot ?? true,
       copyPeerToRuntimeOnComponents: options?.copyPeerToRuntimeOnComponents ?? false,
       dependencyFilterFn: depsFilterFn,
       overrides: this.dependencyResolver.config.overrides,
-      rootComponents: this.dependencyResolver.config.rootComponents,
+      rootComponents,
     };
     await installer.install(this.path, mergedRootPolicy, compDirMap, { installTeambitBit: false }, pmInstallOptions);
     await this.link({
