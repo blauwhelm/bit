@@ -58,9 +58,7 @@ describe('update command', function () {
         ).not.to.equal('1.0.0');
       });
       it('should update the variant dependency in node_modules', function () {
-        expect(helper.fixtures.fs.readJsonFile(`comp1/node_modules/is-negative/package.json`).version).not.to.equal(
-          '1.0.0'
-        );
+        expect(helper.fixtures.fs.readJsonFile(`node_modules/is-negative/package.json`).version).not.to.equal('1.0.0');
       });
       it('should update the version range in component.json', function () {
         expect(
@@ -68,7 +66,7 @@ describe('update command', function () {
         ).not.to.equal('1.0.0');
       });
       it('should update the component dependency in node_modules', function () {
-        expect(helper.fixtures.fs.readJsonFile(`comp2/node_modules/is-odd/package.json`).version).not.to.equal('1.0.0');
+        expect(helper.fixtures.fs.readJsonFile(`node_modules/is-odd/package.json`).version).not.to.equal('1.0.0');
       });
     });
   });
